@@ -1,6 +1,7 @@
 import crypto from 'crypto';
+import prisma from '../lib/prisma';
 
-interface EventData {
+interface EventDataPayload {
     projectId: string;
     eventType: string;
     data: any;
@@ -9,23 +10,28 @@ interface EventData {
 }
 
 export class LedgerService {
-    // In-memory store for MVP since DB isn't ready
-    private static events: any[] = [];
     private static genesisHash = '0000000000000000000000000000000000000000000000000000000000000000';
 
-    static calculateHash(data: EventData, previousHash: string): string {
-        const payload = JSON.stringify(data) + previousHash;
-        return crypto.createHash('sha256').update(payload).digest('hex');
+    static calculateHash(payload: EventDataPayload, previousHash: string): string {
+        // Stringify deterministically if possible, but for MVP JSON.stringify is fine
+        // provided we verify using the EXACT string stored in DB `eventData` if that's what we hash.
+        // Here we are hashing the *components*.
+        const payloadString = JSON.stringify(payload) + previousHash;
+        return crypto.createHash('sha256').update(payloadString).digest('hex');
     }
 
-    static createEvent(projectId: string, eventType: string, data: any, actorId: string) {
-        // Find last event for project to get previous hash
-        const projectEvents = this.events.filter(e => e.projectId === projectId);
-        const lastEvent = projectEvents[projectEvents.length - 1];
-        const previousHash = lastEvent ? lastEvent.currentHash : this.genesisHash;
+    static async createEvent(projectId: string, eventType: string, data: any, actorId: string) {
+        // 1. Get last event for previous hash
+        const lastEvent = await prisma.eventLedger.findFirst({
+            where: { projectId },
+            orderBy: { createdAt: 'desc' }
+        });
 
+        const previousHash = lastEvent ? lastEvent.currentHash : this.genesisHash;
         const timestamp = new Date().toISOString();
-        const eventData: EventData = {
+
+        // 2. Prepare payload for hashing
+        const payload: EventDataPayload = {
             projectId,
             eventType,
             data,
@@ -33,51 +39,94 @@ export class LedgerService {
             actorId
         };
 
-        const currentHash = this.calculateHash(eventData, previousHash);
+        const currentHash = this.calculateHash(payload, previousHash);
 
-        const newEvent = {
-            id: Math.random().toString(36).substr(2, 9),
-            ...eventData,
-            previousHash,
-            currentHash
-        };
+        // 3. Store in DB
+        // We store the exact `data` and ensure we can reconstruct `payload` later.
+        // Ideally we'd store the specific `timestamp` string too.
+        // Let's store `timestamp` inside the JSON string to ensure we get the exact same string back.
+        const dbData = JSON.stringify({ ...data, _ledger_timestamp: timestamp });
 
-        this.events.push(newEvent);
-        return newEvent;
+        const event = await prisma.eventLedger.create({
+            data: {
+                projectId,
+                eventType,
+                eventData: dbData, // Storing 'data' + timestamp
+                previousHash,
+                currentHash,
+                createdBy: actorId,
+                createdAt: timestamp // timestamp is ISO string, Prisma accepts it for DateTime field
+            }
+        });
+
+        return event;
     }
 
-    static getTimeline(projectId: string) {
-        return this.events
-            .filter(e => e.projectId === projectId)
-            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()); // Newest first
+    static async getTimeline(projectId: string) {
+        const events = await prisma.eventLedger.findMany({
+            where: { projectId },
+            orderBy: { createdAt: 'desc' },
+            include: { creator: true } // Include actor details
+        });
+
+        return events.map((e: any) => {
+            // Parse data to return clean object
+            let parsedData = {};
+            try {
+                parsedData = JSON.parse(e.eventData);
+            } catch (err) { }
+
+            return {
+                ...e,
+                data: parsedData
+            };
+        });
     }
 
-    static verifyIntegrity(projectId: string): { valid: boolean; brokenAt?: string } {
-        const projectEvents = this.events
-            .filter(e => e.projectId === projectId)
-            .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()); // Oldest first
+    static async verifyIntegrity(projectId: string): Promise<{ valid: boolean; brokenAt?: string }> {
+        const events = await prisma.eventLedger.findMany({
+            where: { projectId },
+            orderBy: { createdAt: 'asc' }
+        });
 
-        if (projectEvents.length === 0) return { valid: true };
+        if (events.length === 0) return { valid: true };
 
-        for (let i = 0; i < projectEvents.length; i++) {
-            const event = projectEvents[i];
-            const previousHash = i === 0 ? this.genesisHash : projectEvents[i - 1].currentHash;
+        for (let i = 0; i < events.length; i++) {
+            const event = events[i];
+            const previousHash = i === 0 ? this.genesisHash : events[i - 1].currentHash;
 
             if (event.previousHash !== previousHash) {
                 return { valid: false, brokenAt: event.id };
             }
 
-            const eventData: EventData = {
+            // Reconstruct payload
+            let parsedData: any = {};
+            try {
+                parsedData = JSON.parse(event.eventData);
+            } catch (e) { }
+
+            // Extract the timestamp we stored
+            const timestamp = parsedData._ledger_timestamp || event.createdAt.toISOString();
+
+            // Remove our internal timestamp property to get back original 'data' for hashing
+            // Wait, calculateHash used the object passed to it.
+            // In createEvent: payload.data was just `data`. 
+            // The stored `eventData` became `{...data, _ledger_timestamp}`.
+            // So we need to separate them.
+            const { _ledger_timestamp, ...originalData } = parsedData;
+
+            const payload: EventDataPayload = {
                 projectId: event.projectId,
                 eventType: event.eventType,
-                data: event.data,
-                timestamp: event.timestamp,
-                actorId: event.actorId
+                data: originalData,
+                timestamp: timestamp, // Use the stored string exact
+                actorId: event.createdBy
             };
 
-            const calculatedHash = this.calculateHash(eventData, previousHash);
+            const calculatedHash = this.calculateHash(payload, previousHash);
 
             if (calculatedHash !== event.currentHash) {
+                console.error(`Hash mismatch at ${event.id}: Calc ${calculatedHash} vs Stored ${event.currentHash}`);
                 return { valid: false, brokenAt: event.id };
             }
         }

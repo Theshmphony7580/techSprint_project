@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { useNavigate } from 'react-router-dom';
 
 export default function GovDashboard() {
-    const { user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated, token } = useAuth(); // Get token
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         projectName: '',
@@ -26,9 +26,12 @@ export default function GovDashboard() {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await fetch('http://localhost:3000/projects', {
+            const response = await fetch('http://localhost:3001/projects', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     ...formData,
                     budget: parseFloat(formData.budget),
@@ -40,7 +43,8 @@ export default function GovDashboard() {
                 const data = await response.json();
                 navigate(`/projects/${data.project.id}`);
             } else {
-                alert('Failed to create project');
+                const errData = await response.json();
+                alert(`Failed to create project: ${errData.message || 'Unknown error'}`);
             }
         } catch (error) {
             console.error(error);

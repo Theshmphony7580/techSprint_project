@@ -1,3 +1,6 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,45 +10,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  PUBLIC
-  GOV_EMPLOYEE
-  ADMIN
-  AUDITOR
-}
-
-enum EventType {
-  PROJECT_CREATED
-  PROGRESS_UPDATE
-  MILESTONE_ACHIEVED
-  DELAY_REPORTED
-  COMPLETION_DECLARED
-  DOCUMENT_UPLOADED
-  CORRECTION
-}
-
-enum ProjectStatus {
-  SANCTIONED
-  IN_PROGRESS
-  DELAYED
-  COMPLETED
-  HALTED
-}
-
-enum ComplaintStatus {
-  SUBMITTED
-  UNDER_REVIEW
-  RESPONDED
-  RESOLVED
-  REJECTED
-}
+// Enums converted to Strings for SQLite stability
 
 model User {
   id            String    @id @default(uuid())
   name          String
   email         String    @unique
   passwordHash  String
-  role          Role      @default(PUBLIC)
+  role          String    @default("PUBLIC") // Role
   department    String?
   verified      Boolean   @default(false)
   mfaEnabled    Boolean   @default(false)
@@ -56,7 +28,7 @@ model User {
   projectsCreated Project[]
   eventsCreated   EventLedger[]
   complaints      Complaint[] @relation("SubmittedBy")
-  complaintResponses Complaint[] @relation("RespondedBy") // Simplified for now, or separate model
+  complaintResponses Complaint[] @relation("RespondedBy")
   documents       Document[]
   auditLogs       AuditLog[]
 }
@@ -65,14 +37,14 @@ model Project {
   id              String        @id @default(uuid())
   projectName     String
   department      String
-  budget          Decimal       @db.Decimal(15, 2)
+  budget          Decimal
   state           String
   district        String
-  latitude        Decimal       @db.Decimal(10, 8)
-  longitude       Decimal       @db.Decimal(11, 8)
-  startDate       DateTime      @db.Date
-  expectedEndDate DateTime      @db.Date
-  currentStatus   ProjectStatus @default(SANCTIONED)
+  latitude        Decimal
+  longitude       Decimal
+  startDate       DateTime
+  expectedEndDate DateTime
+  currentStatus   String        @default("SANCTIONED") // ProjectStatus
   currentProgress Int           @default(0)
   createdBy       String
   createdAt       DateTime      @default(now())
@@ -86,8 +58,8 @@ model Project {
 model EventLedger {
   id           String    @id @default(uuid())
   projectId    String
-  eventType    EventType
-  eventData    Json
+  eventType    String    // EventType
+  eventData    String    // Json stringified
   previousHash String
   currentHash  String
   createdBy    String
@@ -104,12 +76,11 @@ model Complaint {
   projectId     String
   complaintType String
   description   String
-  status        ComplaintStatus @default(SUBMITTED)
+  status        String          @default("SUBMITTED") // ComplaintStatus
   evidenceUrl   String?
   submittedBy   String
   createdAt     DateTime        @default(now())
   
-  // Response fields
   response      String?
   respondedBy   String?
   respondedAt   DateTime?
@@ -137,8 +108,8 @@ model AuditLog {
   actorId    String
   actionType String
   targetId   String?
-  metadata   Json?
-  hash       String? // Optional integrity check for audit logs
+  metadata   String?   // Json stringified
+  hash       String?
   createdAt  DateTime @default(now())
 
   actor      User     @relation(fields: [actorId], references: [id])

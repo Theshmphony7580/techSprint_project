@@ -21,7 +21,7 @@ export default function ProjectListPage() {
         // For now we'll fetch from our server or use mock data if server isn't reachable from client easily (CORS)
         const fetchProjects = async () => {
             try {
-                const response = await fetch('http://localhost:3000/projects');
+                const response = await fetch('http://localhost:3001/projects');
                 if (response.ok) {
                     const data = await response.json();
                     setProjects(data);
@@ -58,7 +58,7 @@ export default function ProjectListPage() {
                             <div className="flex justify-between items-start mb-2">
                                 <h2 className="text-xl font-semibold">{project.projectName}</h2>
                                 <span className={`text-xs px-2 py-1 rounded-full ${project.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
-                                        project.status === 'DELAYED' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
+                                    project.status === 'DELAYED' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
                                     }`}>
                                     {project.status}
                                 </span>
