@@ -88,9 +88,11 @@ export const addEvent = async (req: Request, res: Response) => {
 
         // Update project status if needed
         if (eventType === 'PROGRESS_UPDATE' && data.progress) {
+            // Add the progress increment to current progress
+            const newProgress = Math.min(100, project.currentProgress + data.progress);
             await prisma.project.update({
                 where: { id },
-                data: { currentProgress: data.progress }
+                data: { currentProgress: newProgress }
             });
         }
 

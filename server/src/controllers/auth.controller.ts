@@ -21,8 +21,8 @@ export const register = async (req: Request, res: Response) => {
         // Auto-assign role logic (for MVP/Dev)
         if (department) {
             role = Role.GOV_EMPLOYEE;
-            // In PRD, verified stays false for GOV until Admin approval
-            // For MVP/Demo: verified = true? Let's keep it false and require Admin or Seed
+            // For MVP/Demo: Auto-verify GOV employees to allow immediate login
+            verified = true;
         }
 
         const newUser = await prisma.user.create({
