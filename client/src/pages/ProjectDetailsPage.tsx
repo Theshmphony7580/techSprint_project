@@ -33,6 +33,39 @@ export default function ProjectDetailsPage() {
     const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState(false);
 
+    // Event Form State
+    const [showEventForm, setShowEventForm] = useState(false);
+    const [progressInput, setProgressInput] = useState('');
+
+    const handleEventSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setUploading(true);
+        try {
+            const res = await fetch(`http://localhost:3001/projects/${id}/events`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({
+                    eventType: 'PROGRESS_UPDATE',
+                    data: { progress: parseInt(progressInput) }
+                })
+            });
+
+            if (res.ok) {
+                alert('Ledger updated successfully!');
+                setShowEventForm(false);
+                setProgressInput('');
+                window.location.reload(); // Quick refresh to see new hash
+            } else {
+                alert('Failed to update ledger');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Error updating ledger');
+        } finally {
+            setUploading(false);
+        }
+    };
+
     useEffect(() => {
         const fetchDetails = async () => {
             try {
@@ -200,7 +233,47 @@ export default function ProjectDetailsPage() {
             </div>
 
             <div>
-                <h2 className="text-2xl font-bold mb-4">Project Timeline (Immutable Ledger)</h2>
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-2xl font-bold">Project Timeline (Immutable Ledger)</h2>
+                    {['GOV_EMPLOYEE', 'ADMIN'].includes(user?.role || '') && (
+                        <Button onClick={() => setShowEventForm(!showEventForm)} variant={showEventForm ? "secondary" : "default"}>
+                            {showEventForm ? 'Cancel Update' : '+ Add Progress Update'}
+                        </Button>
+                    )}
+                </div>
+
+                {showEventForm && (
+                    <div className="p-6 mb-6 border rounded-lg bg-blue-50/50 border-blue-100">
+                        <h3 className="font-semibold mb-4">Add Official Ledger Event</h3>
+                        <form onSubmit={handleEventSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Event Type</label>
+                                <select
+                                    className="w-full p-2 border rounded-md"
+                                    disabled // For now, only progress updates
+                                >
+                                    <option>PROGRESS_UPDATE</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">New Progress (%)</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    className="w-full p-2 border rounded-md"
+                                    value={progressInput}
+                                    onChange={(e) => setProgressInput(e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <Button type="submit" disabled={uploading}>
+                                {uploading ? 'Writing to Ledger...' : 'Commit Immutable Update'}
+                            </Button>
+                        </form>
+                    </div>
+                )}
+
                 {/* Timeline rendering same as before */}
                 <div className="relative border-l border-border/50 ml-3 space-y-8 pb-8">
                     {timeline.map((event) => (
@@ -264,8 +337,14 @@ function ComplaintsList({ projectId }: { projectId: string }) {
                 setComplaints(complaints.map(c => c.id === complaintId ? { ...c, status: 'RESOLVED', response: responseText, respondedAt: new Date() } : c));
                 setRespondingTo(null);
                 setResponseText('');
+            } else {
+                const data = await res.json();
+                alert(`Failed to resolve: ${data.message || 'Unknown error'}`);
             }
-        } catch (err) { alert('Failed to resolve'); }
+        } catch (err) {
+            console.error(err);
+            alert('Failed to resolve: Network error');
+        }
     }
 
     if (complaints.length === 0) return <div className="text-muted-foreground italic">No complaints filed for this project.</div>;

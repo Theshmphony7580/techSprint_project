@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from "@/components/ui/button"
 
@@ -74,8 +74,14 @@ export default function LoginPage() {
                     <Button type="submit" className="w-full">Sign In</Button>
                 </form>
 
-                <div className="text-center text-sm">
+                <div className="text-center text-sm space-y-2">
                     <p className="text-muted-foreground">
+                        Don't have an account?{' '}
+                        <Link to="/signup" className="font-semibold text-primary hover:underline">
+                            Register as Citizen
+                        </Link>
+                    </p>
+                    <p className="text-muted-foreground text-xs">
                         Use <strong>demo@gov.in / password</strong> (if mock allows)
                     </p>
                 </div>

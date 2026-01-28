@@ -53,6 +53,11 @@ model Project {
   events          EventLedger[]
   complaints      Complaint[]
   documents       Document[]
+
+  @@index([state, district])
+  @@index([department])
+  @@index([currentStatus])
+  @@index([createdAt])
 }
 
 model EventLedger {
@@ -69,6 +74,7 @@ model EventLedger {
   creator      User      @relation(fields: [createdBy], references: [id])
 
   @@index([currentHash])
+  @@index([projectId, createdAt])
 }
 
 model Complaint {
@@ -88,6 +94,8 @@ model Complaint {
   project       Project   @relation(fields: [projectId], references: [id])
   submitter     User      @relation("SubmittedBy", fields: [submittedBy], references: [id])
   responder     User?     @relation("RespondedBy", fields: [respondedBy], references: [id])
+
+  @@index([projectId, status])
 }
 
 model Document {
