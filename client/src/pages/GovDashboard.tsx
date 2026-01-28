@@ -55,40 +55,76 @@ export default function GovDashboard() {
     };
 
     return (
-        <div className="space-y-8">
-            <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold">Government Dashboard</h1>
-                <div className="text-sm text-muted-foreground">
-                    Department: {user?.role === 'GOV_EMPLOYEE' ? 'Public Works' : 'General'}
+        <div className="flex flex-col items-center space-y-8">
+      
+          {/* TOP HEADER */}
+          <div className="w-full max-w-4xl flex items-center justify-between">
+            <h1 className="text-3xl font-bold">Government Dashboard</h1>
+            <div className="text-sm text-muted-foreground">
+              Department: {user?.role === 'GOV_EMPLOYEE' ? 'Public Works' : 'General'}
+            </div>
+          </div>
+      
+          {/* FORM CARD */}
+          <div className="w-full max-w-2xl border rounded-lg p-6 shadow-sm">
+            <h2 className="text-xl font-semibold mb-4 text-center">
+              Create New Project
+            </h2>
+      
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Project Name</label>
+                <input
+                  name="projectName"
+                  value={formData.projectName}
+                  onChange={handleChange}
+                  className="flex h-10 w-full rounded-md border border-input px-3"
+                  required
+                />
+              </div>
+      
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Department</label>
+                <input
+                  name="department"
+                  value={formData.department}
+                  onChange={handleChange}
+                  className="flex h-10 w-full rounded-md border border-input px-3"
+                  required
+                />
+              </div>
+      
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Budget (INR)</label>
+                  <input
+                    name="budget"
+                    type="number"
+                    value={formData.budget}
+                    onChange={handleChange}
+                    className="flex h-10 w-full rounded-md border border-input px-3"
+                    required
+                  />
                 </div>
-            </div>
-
-            <div className="max-w-2xl border rounded-lg p-6 shadow-sm">
-                <h2 className="text-xl font-semibold mb-4">Create New Project</h2>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Project Name</label>
-                        <input name="projectName" value={formData.projectName} onChange={handleChange} className="flex h-10 w-full rounded-md border border-input px-3" required />
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Department</label>
-                        <input name="department" value={formData.department} onChange={handleChange} className="flex h-10 w-full rounded-md border border-input px-3" required />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Budget (INR)</label>
-                            <input name="budget" type="number" value={formData.budget} onChange={handleChange} className="flex h-10 w-full rounded-md border border-input px-3" required />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">District</label>
-                            <input name="district" value={formData.district} onChange={handleChange} className="flex h-10 w-full rounded-md border border-input px-3" required />
-                        </div>
-                    </div>
-                    <Button type="submit" disabled={loading} className="w-full">
-                        {loading ? 'Sanctioning...' : 'Sanction Project'}
-                    </Button>
-                </form>
-            </div>
+      
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">District</label>
+                  <input
+                    name="district"
+                    value={formData.district}
+                    onChange={handleChange}
+                    className="flex h-10 w-full rounded-md border border-input px-3"
+                    required
+                  />
+                </div>
+              </div>
+      
+              <Button type="submit" disabled={loading} className="w-full">
+                {loading ? 'Sanctioning...' : 'Sanction Project'}
+              </Button>
+            </form>
+          </div>
         </div>
-    );
+      )
+      
 }

@@ -1,58 +1,77 @@
-import { Link, Outlet } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
-import { Button } from '@/components/ui/button';
+import { Link, Outlet } from 'react-router-dom'
+import { useAuth } from '@/context/AuthContext'
+import { Button } from '@/components/ui/button'
 
 export default function MainLayout() {
-    const { user, logout } = useAuth();
+  const { user, logout } = useAuth()
 
-    return (
-        <div className="min-h-screen bg-background font-sans antialiased text-foreground">
-            <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                <div className="container flex h-16 items-center justify-between px-4">
-                    <Link to="/" className="text-2xl font-bold text-primary">
-                        GovTransparency
-                    </Link>
-                    <nav className="flex items-center gap-6">
-                        <Link to="/projects" className="text-sm font-medium transition-colors hover:text-primary">
-                            Public Projects
-                        </Link>
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      
+      {/* HEADER */}
+      <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="flex h-16 items-center justify-between">
+            
+            {/* LOGO */}
+            <Link to="/" className="text-xl font-bold text-primary">
+              GovTransparency
+            </Link>
 
-                        {user?.role === 'GOV_EMPLOYEE' && (
-                            <Link to="/dashboard" className="text-sm font-medium transition-colors hover:text-primary">
-                                <Button variant="ghost">My Dashboard</Button>
-                            </Link>
-                        )}
+            {/* NAV */}
+            <nav className="flex items-center gap-4">
+              <Link
+                to="/projects"
+                className="text-sm font-medium text-muted-foreground hover:text-primary transition"
+              >
+                Public Projects
+              </Link>
 
-                        {user?.role === 'ADMIN' && (
-                            <Link to="/admin" className="text-sm font-medium transition-colors hover:text-primary">
-                                <Button variant="ghost" className="text-purple-600">Admin Panel</Button>
-                            </Link>
-                        )}
+              {user?.role === 'GOV_EMPLOYEE' && (
+                <Button asChild variant="ghost" size="sm">
+                  <Link to="/dashboard">My Dashboard</Link>
+                </Button>
+              )}
 
-                        {user ? (
-                            <div className="flex items-center gap-4 pl-4 border-l">
-                                <div className="flex flex-col items-end">
-                                    <span className="text-sm font-medium leading-none">{user.name}</span>
-                                    <span className="text-xs text-muted-foreground">{user.role.replace('_', ' ')}</span>
-                                </div>
-                                <Button variant="outline" size="sm" onClick={logout}>
-                                    Logout
-                                </Button>
-                            </div>
-                        ) : (
-                            <Link to="/login">
-                                <Button>Login</Button>
-                            </Link>
-                        )}
-                    </nav>
+              {user?.role === 'ADMIN' && (
+                <Button asChild variant="ghost" size="sm" className="text-purple-600">
+                  <Link to="/admin">Admin Panel</Link>
+                </Button>
+              )}
+
+              {/* AUTH SECTION */}
+              {user ? (
+                <div className="flex items-center gap-3 pl-4 ml-2 border-l">
+                  <div className="text-right leading-tight">
+                    <p className="text-sm font-medium">{user.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {user.role.replace('_', ' ')}
+                    </p>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={logout}>
+                    Logout
+                  </Button>
                 </div>
-            </header>
-            <main className="container py-6 px-4">
-                <Outlet />
-            </main>
-            <footer className="border-t py-6 text-center text-sm text-muted-foreground">
-                © 2026 Government Project Transparency Platform
-            </footer>
+              ) : (
+                <Button asChild size="sm">
+                  <Link to="/login">Login</Link>
+                </Button>
+              )}
+            </nav>
+
+          </div>
         </div>
-    );
+      </header>
+
+      {/* MAIN */}
+      <main className="mx-auto max-w-7xl px-6 py-8">
+        <Outlet />
+      </main>
+
+      {/* FOOTER */}
+      <footer className="border-t py-6 text-center text-sm text-muted-foreground">
+        © 2026 Government Project Transparency Platform
+      </footer>
+    </div>
+  )
 }
