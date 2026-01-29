@@ -19,6 +19,7 @@ interface ProjectDetails {
 
 import { useAuth } from '../context/AuthContext';
 import { Button } from '@/components/ui/button';
+import { BudgetAnalytics } from '@/components/BudgetAnalytics';
 
 export default function ProjectDetailsPage() {
     const { id } = useParams<{ id: string }>();
@@ -272,6 +273,11 @@ export default function ProjectDetailsPage() {
                         <div className="text-xl font-bold">{project.currentStatus || 'SANCTIONED'}</div>
                     </div>
                 </div>
+
+                <BudgetAnalytics
+                    totalBudget={parseFloat(project.budget.toString())}
+                    budgetSpent={parseFloat(project.budgetSpent?.toString() || '0')}
+                />
             </div>
 
             <div>
@@ -376,31 +382,7 @@ export default function ProjectDetailsPage() {
                                         <p className="text-muted-foreground">Project sanctioned with budget <span className="font-medium text-foreground">₹{event.data.budget}</span></p>
                                     )}
                                     {event.eventType === 'PROGRESS_UPDATE' && event.data && (
-                                        <div className="space-y-2">
-                                            <p className="text-muted-foreground">
-                                                Progress: <span className="font-medium text-foreground">{event.data.progress}%</span>
-                                            </p>
-                                            {event.data.budgetSpent > 0 && (
-                                                <p className="text-muted-foreground">
-                                                    Budget Spent: <span className="font-medium text-red-600">₹{event.data.budgetSpent}</span>
-                                                </p>
-                                            )}
-                                            {event.data.description && (
-                                                <p className="text-sm text-foreground/80 mt-2 border-l-2 border-primary/30 pl-3">
-                                                    {event.data.description}
-                                                </p>
-                                            )}
-                                            {event.data.evidenceUrl && (
-                                                <div className="mt-3">
-                                                    <img
-                                                        src={`http://localhost:3001${event.data.evidenceUrl}`}
-                                                        alt="Evidence"
-                                                        className="rounded-lg max-w-md border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                                                        onClick={() => window.open(`http://localhost:3001${event.data.evidenceUrl}`, '_blank')}
-                                                    />
-                                                </div>
-                                            )}
-                                        </div>
+                                        <p className="text-muted-foreground">Progress reported: <span className="font-medium text-foreground">{event.data.progress}%</span></p>
                                     )}
                                     <div className="mt-3 pt-3 border-t border-border/30 text-[10px] font-mono text-muted-foreground break-all opacity-70">
                                         Hash: {event.currentHash}

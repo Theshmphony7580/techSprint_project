@@ -34,7 +34,7 @@ export default function LandingPage() {
                     <div className="text-3xl font-bold">Immutable</div>
                     <div className="text-sm text-muted-foreground uppercase tracking-wider">Ledger</div>
                 </div>
-            </section>
+            </div>
 
             {/* Features Grid */}
             <section className="py-24 bg-background">

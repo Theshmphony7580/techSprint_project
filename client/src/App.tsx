@@ -5,6 +5,7 @@ import ProjectListPage from './pages/ProjectListPage';
 import ProjectDetailsPage from './pages/ProjectDetailsPage';
 import GovDashboard from './pages/GovDashboard';
 import { AuthProvider } from './context/AuthContext';
+import AuthPage from './pages/LoginPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import AdminDashboard from './pages/AdminDashboard'; // Import AdminDashboard
@@ -19,7 +20,7 @@ function App() {
             <Route path="projects" element={<ProjectListPage />} />
             <Route path="projects/:id" element={<ProjectDetailsPage />} />
             <Route path="dashboard" element={<GovDashboard />} />
-            <Route path="login" element={<LoginPage />} />
+            <Route path="login" element={<AuthPage />} />
             <Route path="signup" element={<SignupPage />} />
             <Route path="admin" element={<AdminDashboard />} />
           </Route>
